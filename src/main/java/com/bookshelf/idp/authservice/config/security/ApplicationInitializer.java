@@ -1,8 +1,7 @@
 package com.bookshelf.idp.authservice.config.security;
 
-import com.bookshelf.idp.authservice.entity.User;
-import com.bookshelf.idp.authservice.entity.UserRole;
-import com.bookshelf.idp.authservice.repository.UserRepository;
+import com.bookshelf.idp.authservice.client.DatabaseServiceClient;
+import com.bookshelf.idp.authservice.model.UserModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApplicationInitializer implements ApplicationRunner {
 
-    private final UserRepository userRepository;
+    private final DatabaseServiceClient dbClient;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${admin.name}")
@@ -24,30 +23,33 @@ public class ApplicationInitializer implements ApplicationRunner {
     @Value("${admin.password}")
     private String adminPassword;
 
-    public ApplicationInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
+    public ApplicationInitializer(DatabaseServiceClient dbClient, PasswordEncoder passwordEncoder) {
+        this.dbClient = dbClient;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        if (!userRepository.existsByEmail(adminEmail)) {
-            User admin = new User();
-            admin.setName(adminName);
-            admin.setEmail(adminEmail);
-            admin.setPassword(passwordEncoder.encode(adminPassword));
-            admin.setRole(UserRole.ADMIN);
-            userRepository.save(admin);
-            System.out.println("Admin created: " + adminEmail);
-        }
+        try {
+            if (!dbClient.existsByEmail(adminEmail)) {
+                UserModel admin = new UserModel();
+                admin.setName(adminName);
+                admin.setEmail(adminEmail);
+                admin.setPassword(passwordEncoder.encode(adminPassword));
+                admin.setRole("ADMIN");
+                dbClient.save(admin);
+            }
 
-        if (!userRepository.existsByEmail("ada@bookshelf.ro")) {
-            User user = new User();
-            user.setName("Ada");
-            user.setEmail("ada@bookshelf.ro");
-            user.setPassword(passwordEncoder.encode("parola123"));
-            user.setRole(UserRole.USER);
-            userRepository.save(user);
+            if (!dbClient.existsByEmail("ada@bookshelf.ro")) {
+                UserModel user = new UserModel();
+                user.setName("Ada");
+                user.setEmail("ada@bookshelf.ro");
+                user.setPassword(passwordEncoder.encode("parola123"));
+                user.setRole("USER");
+                dbClient.save(user);
+            }
+        } catch (Exception e) {
+            System.out.println("Database service not available, skipping initialization: " + e.getMessage());
         }
     }
 }

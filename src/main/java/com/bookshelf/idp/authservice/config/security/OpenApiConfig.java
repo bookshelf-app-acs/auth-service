@@ -1,4 +1,4 @@
-package com.bookshelf.idp.authservice.config;
+package com.bookshelf.idp.authservice.config.security;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
