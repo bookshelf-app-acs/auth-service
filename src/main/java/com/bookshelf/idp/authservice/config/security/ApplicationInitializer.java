@@ -31,25 +31,25 @@ public class ApplicationInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         try {
-            if (!dbClient.existsByEmail(adminEmail)) {
-                UserModel admin = new UserModel();
-                admin.setName(adminName);
-                admin.setEmail(adminEmail);
-                admin.setPassword(passwordEncoder.encode(adminPassword));
-                admin.setRole("ADMIN");
-                dbClient.save(admin);
-            }
-
-            if (!dbClient.existsByEmail("ada@bookshelf.ro")) {
-                UserModel user = new UserModel();
-                user.setName("Ada");
-                user.setEmail("ada@bookshelf.ro");
-                user.setPassword(passwordEncoder.encode("parola123"));
-                user.setRole("USER");
-                dbClient.save(user);
-            }
+            ensureUser(adminName, adminEmail, adminPassword, "ADMIN");
+            ensureUser("Ada Cosma", "ada@bookshelf.ro", "parola123", "USER");
+            ensureUser("Teodora Popescu", "teodora@bookshelf.ro", "parola123", "USER");
+            ensureUser("Maria Ionescu", "maria@bookshelf.ro", "parola123", "USER");
+            ensureUser("Andrei Stan", "andrei@bookshelf.ro", "parola123", "USER");
+            ensureUser("Cristian Marin", "cristian@bookshelf.ro", "parola123", "USER");
         } catch (Exception e) {
             System.out.println("Database service not available, skipping initialization: " + e.getMessage());
+        }
+    }
+
+    private void ensureUser(String name, String email, String rawPassword, String role) {
+        if (!dbClient.existsByEmail(email)) {
+            UserModel user = new UserModel();
+            user.setName(name);
+            user.setEmail(email);
+            user.setPassword(passwordEncoder.encode(rawPassword));
+            user.setRole(role);
+            dbClient.save(user);
         }
     }
 }

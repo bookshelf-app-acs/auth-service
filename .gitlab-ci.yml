@@ -1,0 +1,41 @@
+stages:
+  - build
+  - package
+
+variables:
+  DOCKER_IMAGE: adacosma/auth-service
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+# ─── Build cu Maven ───────────────────────────────────────
+build-jar:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn -B clean package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 hour
+  cache:
+    key: maven-cache
+    paths:
+      - .m2/repository
+
+# ─── Build + push imagine Docker ──────────────────────────
+docker-build-push:
+  stage: package
+  image: docker:24
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+  script:
+    - docker build -t "$DOCKER_IMAGE:latest" -t "$DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA" .
+    - docker push "$DOCKER_IMAGE:latest"
+    - docker push "$DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA"
+  dependencies:
+    - build-jar
+  only:
+    - main
